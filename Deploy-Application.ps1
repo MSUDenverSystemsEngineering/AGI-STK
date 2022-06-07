@@ -199,7 +199,7 @@ Try {
 		[string]$installPhase = 'Pre-Uninstallation'
 
 		## Show Welcome Message, close Internet Explorer with a 60 second countdown before automatically closing
-		Show-InstallationWelcome -CloseApps 'AgUIApplication' -CloseAppsCountdown 60
+		Show-InstallationWelcome -CloseApps 'ClientSettings,ansyscl,AgUiApplication' -CloseAppsCountdown 60
 
 		## Show Progress Message (with the default message)
 		Show-InstallationProgress
@@ -219,21 +219,31 @@ Try {
 		}
 
 		# <Perform Uninstallation tasks here>
-		<#
-		Write-Log -Message "Attempting to run uninstaller..." -Source 'Uninstallation' -LogType 'CMTrace'
-		$exitCode = Execute-Process -Path "$envProgramFiles\MATLAB\r2022a\uninstall\bin\win64\uninstall.exe" -Parameters "-inputFile `"$dirSupportFiles\uninstaller_input.txt`"" -PassThru
-		If (($exitCode.ExitCode -ne "0") -and ($mainExitCode -ne "3010")) {
-                $mainExitCode = $exitCode.ExitCode
+		$applicationList = 'STK'
+		ForEach($installedApplication in $applicationList) {
+			$installedApplicationList = Get-InstalledApplication -Name $installedApplication
+			ForEach($application in $installedApplicationList) {
+				$logFile = $application.ProductCode.trim('{}')
+				#$logFile = $productCode.Substring(1,$productCode.length -2)
+				#$logfile = $productCode.trim('{}')
+
+				#Write-Log -Message "Product Code:$productCode" -Source 'Pre-Installation' -LogType 'CMTrace'
+				Write-Log -Message "logFile:$logFile" -Source 'Pre-Installation' -LogType 'CMTrace'
+				$uninstallString = $application.UninstallString
+				$uninstallSubkey = $application.UninstallSubkey
+				Write-Log -Message "Uninstall string: $uninstallString" -Source 'Pre-Installation' -LogType 'CMTrace'
+				$uninstallerPath = $uninstallString.Substring(0, $uninstallString.lastIndexOf('.exe')+4)
+				$uninstallerParameters = $uninstallString.Substring($uninstallerString.length +1)
+
+				Write-Log -Message "Uninstall path:$uninstallerPath" -Source 'Pre-Installation' -LogType 'CMTrace'
+				Write-Log -Message "Uninstall parameters:$uninstallerParameters" -Source 'Pre-Installation' -LogType 'CMTrace'
+
+				Write-Log -Message "Attempting to run uninstaller..." -Source 'Pre-Installation' -LogType 'CMTrace'
+				$exitCode = Execute-Process -Path $uninstallerPath -Parameters "/x $uninstallSubkey /quiet /norestart /log $Env:windir\Logs\Software\$logFile-uninstall.log" -PassThru
+				If (($exitCode.ExitCode -ne "0") -and ($mainExitCode -ne "3010")) { $mainExitCode = $exitCode.ExitCode }
+			}
 		}
-		Write-Log -Message "Checking for leftover files and directories..." -Source 'Uninstallation' -LogType 'CMTrace'
-		If ( Test-Path "$envProgramFiles\MATLAB\r2022a") {
-				Write-Log -Message "Deleting leftover files..." -Source 'Pre-Installation' -LogType 'CMTrace'
-				Get-ChildItem -Path "$envProgramFiles\MATLAB\r2022a" -Recurse | Remove-Item -force -recurse
-				Write-Log -Message "Deleting leftover directory..." -Source 'Pre-Installation' -LogType 'CMTrace'
-				Remove-Item "$envProgramFiles\MATLAB\r2022a" -Force
-				Write-Log -Message "Files successfully deleted." -Source 'Pre-Installation' -LogType 'CMTrace'
-		}
-		#>
+
 
 		##*===============================================
 		##* POST-UNINSTALLATION
@@ -294,8 +304,8 @@ Catch {
 # SIG # Begin signature block
 # MIIU9wYJKoZIhvcNAQcCoIIU6DCCFOQCAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUdDF1wHbvxvoAHbNWi5KIXdjg
-# ujqgghHXMIIFbzCCBFegAwIBAgIQSPyTtGBVlI02p8mKidaUFjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUdbyy1w367shvuAtxTHPzF4Iy
+# bZ2gghHXMIIFbzCCBFegAwIBAgIQSPyTtGBVlI02p8mKidaUFjANBgkqhkiG9w0B
 # AQwFADB7MQswCQYDVQQGEwJHQjEbMBkGA1UECAwSR3JlYXRlciBNYW5jaGVzdGVy
 # MRAwDgYDVQQHDAdTYWxmb3JkMRowGAYDVQQKDBFDb21vZG8gQ0EgTGltaXRlZDEh
 # MB8GA1UEAwwYQUFBIENlcnRpZmljYXRlIFNlcnZpY2VzMB4XDTIxMDUyNTAwMDAw
@@ -395,13 +405,13 @@ Catch {
 # ZSBTaWduaW5nIENBIFIzNgIRAKVN33D73PFMVIK48rFyyjEwCQYFKw4DAhoFAKB4
 # MBgGCisGAQQBgjcCAQwxCjAIoAKAAKECgAAwGQYJKoZIhvcNAQkDMQwGCisGAQQB
 # gjcCAQQwHAYKKwYBBAGCNwIBCzEOMAwGCisGAQQBgjcCARUwIwYJKoZIhvcNAQkE
-# MRYEFODNgYE2u//MvziJBq+JQPHR7F3oMA0GCSqGSIb3DQEBAQUABIIBgJD+nUUS
-# xLrheuT4cQckcPrWR33Ozbz1E3J8rc3VXqqzq5hz2NgwAXd/dbUZy0NlRYXyiOoe
-# u0Rjia70Pv1/5q5AVWvo7tu9E05vtWJhnY3J/aC3E1zJyjVbHlSUQtYDjvNJHPL5
-# TsI2RLwpSVsUS2SuI/mH9sEHC3mtqXjviJC5tah6tPx6wNFzwDd4v8DFEIjgMYf1
-# yalsV5bP+/mjgxNE0wImhFL9m0W9cLpoJYJCzwqpWQUXVmzx9NC194mTUODwulVO
-# zqao60wg7eDCjdIF3S7k7lQLIlJnMREvNEwRq7U89aNJTIhhouWRvYqFNkqkMjhK
-# cHNwQ6Jht6O70H/1FPDdbtRFQjVe5EqNlkteHEAkyY5vl8mqPaPfoLdAMID73Oz/
-# BV5Bonw9PeyPyK32W/IoYapjSgf9z+DITP/qNedQTJISrjGGLkiXiz413/6jFIQY
-# G6+wuqrQHjXx3TOXm4OnwYkrTVbrITqFqy2zjZyj0e8sl9dWRUeERCo7yA==
+# MRYEFHYNHrEL/XzVFUlwocotuReDleuuMA0GCSqGSIb3DQEBAQUABIIBgH6ebWcM
+# 1m60UbhsU/DJKuT5gOs5rUmWFBAwECiX62OucjCoIsDrZTOzdwbTHC3HrMX2tCFd
+# rcaTl62+M92gxgAjIYCsVITYteamfiY/ZJfmxesrMOSeEwNxhyI+tS9OJMGpupdj
+# F1nyh2iNfpug6ZVhLN/OpMDJhXMf/lhh4Q982u65PJ/g8PHD/4Bg1UXGIBf8Z3Ta
+# lHt6jY/++ct+kOAHl9nAI6VUmxfjzSM5NYwP67ksJept9D9CDhPae40xrfpl3TzB
+# 4Uo0f6jLWA0m5UDyCGb7WjBnr6eqbX4nOjFM4/6DgvRO9e/GmTa/unKfos32LNYR
+# xCA+yOJ+VF414R/CdIGUgOEJlCPI3aKboG5STxPn3nGcqE2L3gOZQrBgpzaTfPDH
+# XDr5zn7amKOHaToBUTV5hW6RT8b5h/ejPi/nY6YO6F9Qu3Z/T3lDK3qj21KLPVy7
+# IcYYVUJE5xQoYaXPO0bcDfEEi8IT8ejrKdLmrfgoWAOZQkxQGdmYzHYbZA==
 # SIG # End signature block
