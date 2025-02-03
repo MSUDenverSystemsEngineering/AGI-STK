@@ -67,13 +67,13 @@ Try {
 	## Variables: Application
 	[string]$appVendor = 'Analytical Graphics, Incorporated'
 	[string]$appName = 'STK'
-	[string]$appVersion = '12.4.0'
+	[string]$appVersion = '12.9.0'
 	[string]$appArch = 'x64'
 	[string]$appLang = 'EN'
 	[string]$appRevision = '01'
 	[string]$appScriptVersion = '1.0.15'
-	[string]$appScriptDate = '05/31/2022'
-	[string]$appScriptAuthor = 'Craig Myers'
+	[string]$appScriptDate = '10/01/2024'
+	[string]$appScriptAuthor = 'Will Jarvill'
 	##*===============================================
 	## Variables: Install Titles (Only set here to override defaults set by the toolkit)
 	[string]$installName = ''
@@ -170,7 +170,7 @@ Try {
 		## <Perform Installation tasks here>
 
 		Write-Log -Message "Attempting to run STK installer..." -Source 'Installation' -LogType 'CMTrace'
-		$exitCode = Execute-Process -Path "$dirFiles\Ansys_STK_Enterprise_v12.4.0\STK_v12.4.0\install.exe" -Parameters "/s /v`"/qn`" /licenseagree" -WindowStyle "Hidden" -PassThru
+		$exitCode = Execute-Process -Path "$dirFiles\Ansys_STK_Pro_v12.9.0\STK_v12.9.0\install.exe" -Parameters "/s /v`"/qn`" /licenseagree" -WindowStyle "Hidden" -PassThru
 		If (($exitCode.ExitCode -ne "0") -and ($mainExitCode -ne "3010")) { $mainExitCode = $exitCode.ExitCode }
 
 
@@ -180,16 +180,20 @@ Try {
 		[string]$installPhase = 'Post-Installation'
 
 		## <Perform Post-Installation tasks here>
-		Write-Log -Message "Attempting to run STKSEET installer..." -Source 'Installation' -LogType 'CMTrace'
-		$exitCode = Execute-Process -Path "msiexec.exe" -Parameters "/i `"$dirFiles\Ansys_STK_Enterprise_v12.4.0\STKSEET_v12.4.0\STK Space Environment and Effects Tool 12.msi`" /quiet /norestart /log $Env:windir\Logs\Software\STKSEET_v12.4.0-install.log" -PassThru
+		#Write-Log -Message "Attempting to run STKSEET installer..." -Source 'Installation' -LogType 'CMTrace'
+		#$exitCode = Execute-Process -Path "msiexec.exe" -Parameters "/i `"$dirFiles\Ansys_STK_Enterprise_v12.4.0\STKSEET_v12.4.0\STK Space Environment and Effects Tool 12.msi`" /quiet /norestart /log $Env:windir\Logs\Software\STKSEET_v12.4.0-install.log" -PassThru
+		#If (($exitCode.ExitCode -ne "0") -and ($mainExitCode -ne "3010")) { $mainExitCode = $exitCode.ExitCode }
+
+		Write-Log -Message "Attempting to run Engine Resources installer..." -Source 'Installation' -LogType 'CMTrace'
+		$exitCode = Execute-Process -Path "$dirFiles\Ansys_STK_Premium_v12.9.0\STKEOIR_v12.9.0\install.exe" -Parameters "/s /v`"/qn`" /licenseagree" -WindowStyle "Hidden" -PassThru
 		If (($exitCode.ExitCode -ne "0") -and ($mainExitCode -ne "3010")) { $mainExitCode = $exitCode.ExitCode }
 
 		Write-Log -Message "Attempting to run Engine Resources installer..." -Source 'Installation' -LogType 'CMTrace'
-		$exitCode = Execute-Process -Path "msiexec.exe" -Parameters "/i `"$dirFiles\Ansys_STK_Enterprise_v12.4.0\STK_Engine_Resources_v12.4.0\STK Engine Deployment Resources 12.msi`" /quiet /norestart /log $Env:windir\Logs\Software\STK_Engine_Resources_v12.4.0-install.log" -PassThru
+		$exitCode = Execute-Process -Path "$dirFiles\Ansys_STK_Enterprise_v12.9.0\BEE_2024R2\BehaviorExecutionEngineAndSTKDelegates_2024R2\setup.exe" -Parameters "/s /v`"/qn`" /licenseagree" -WindowStyle "Hidden" -PassThru
 		If (($exitCode.ExitCode -ne "0") -and ($mainExitCode -ne "3010")) { $mainExitCode = $exitCode.ExitCode }
 
 		## Display a message at the end of the install
-		If (-not $useDefaultMsi) { Show-InstallationPrompt -Message "$appName $appVersion has been successfully installed." -ButtonRightText 'OK' -Icon Information -NoWait }
+		If (-not $useDefaultMsi) {}
 	}
 	ElseIf ($deploymentType -ieq 'Uninstall')
 	{
